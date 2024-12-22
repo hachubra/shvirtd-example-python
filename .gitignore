@@ -1,0 +1,4 @@
+schema.pdf
+LICENSE
+./venv/*
+./.env

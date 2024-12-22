@@ -1,0 +1,46 @@
+include:
+  - proxy.yaml
+
+x-deploy: &deploy-dev
+  deploy:
+    resources:
+      limits:
+        cpus: "1"
+        memory: 512M
+      reservations:
+        memory: 256M
+x-env_file: &env_file
+  env_file:
+    - .env
+x-restart: &restart
+  restart: always #no, on-failure , always(default), unless-stopped 
+
+services:
+  web:
+    depends_on: ["db"]
+    build:
+      context: .
+      dockerfile: ./Dockerfile.python
+    networks: 
+      backend:
+        ipv4_address: 172.20.0.5
+    <<: [*deploy-dev, *env_file, *restart]
+    environment:
+    - DB_HOST=172.20.0.10
+    - DB_USER=${MYSQL_USER}
+    - DB_PASSWORD=${MYSQL_PASSWORD}
+    - DB_NAME=${MYSQL_DATABASE}
+  
+
+  db:
+    image: mysql:8
+    #"mysql_native_password" only for wordpress, usually don't need!
+    #command: "--default-authentication-plugin=mysql_native_password"  # <--- При выполнени домашнего задания не использовать!!
+    networks: 
+      backend:
+        ipv4_address: 172.20.0.10
+    <<: [*deploy-dev, *env_file]
+    environment:
+      - MYSQL_ROOT_HOST="%" # it's very important!!!
+    restart: on-failure
+    
